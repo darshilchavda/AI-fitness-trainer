@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pose Cam – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>🎥 Live Pose Detector</h1>
+      <p>MediaPipe AI tracks your body landmarks and counts reps in real time</p>
+    </div>
+
+    <div class="camera-layout">
+
+      <!-- Live Feed -->
+      <div class="camera-feed-wrap">
+        <div class="feed-header">
+          <span class="live-dot"></span> LIVE — AI Pose Tracking
+          <span style="margin-left:auto; font-size:0.75rem; color:#aaa;">MediaPipe + OpenCV</span>
+        </div>
+        <img id="cameraFeed" src="{{ url_for('video_feed') }}"
+             alt="Live camera feed" class="camera-feed" onerror="handleFeedError()">
+        <div id="feedError" class="feed-error" style="display:none;">
+          <div>📷</div>
+          <p>Camera unavailable. Check webcam connection and permissions.</p>
+        </div>
+      </div>
+
+      <!-- Control Panel -->
+      <div class="camera-controls">
+
+        <!-- Rep Display with progress ring -->
+        <div class="rep-display">
+          <div class="rep-label">PUSH-UP REPS</div>
+          <div class="rep-count" id="repCount">0</div>
+          <div class="rep-progress-bar">
+            <div class="rep-progress-fill" id="repFill" style="width:0%"></div>
+          </div>
+          <div class="rep-goal-label">Goal: <span id="repGoalText">15 reps</span></div>
+        </div>
+
+        <!-- Session Stats -->
+        <div class="session-stats-row">
+          <div class="session-stat">
+            <div class="ss-val" id="setCount">1</div>
+            <div class="ss-lbl">Set</div>
+          </div>
+          <div class="session-stat">
+            <div class="ss-val" id="totalRepsToday">0</div>
+            <div class="ss-lbl">Total Today</div>
+          </div>
+          <div class="session-stat">
+            <div class="ss-val" id="calBurn">0</div>
+            <div class="ss-lbl">~Cals Burned</div>
+          </div>
+        </div>
+
+        <!-- Set Goal Slider -->
+        <div class="card" style="padding:16px;">
+          <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:8px;">
+            🎯 Rep Goal per Set
+          </label>
+          <input type="range" id="repGoalSlider" min="5" max="50" value="15"
+                 class="rep-slider" oninput="updateGoal(this.value)">
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);">
+            <span>5</span><span>50</span>
+          </div>
+        </div>
+
+        <!-- Angle Guide -->
+        <div class="control-info">
+          <h3>📐 Angle Detection</h3>
+          <div class="angle-item">
+            <span class="angle-dot up"></span>
+            <span><strong>UP:</strong> Elbow angle &gt; 160°</span>
+          </div>
+          <div class="angle-item">
+            <span class="angle-dot down"></span>
+            <span><strong>DOWN:</strong> Elbow angle &lt; 70°</span>
+          </div>
+          <div class="angle-item">
+            <span class="angle-dot rep"></span>
+            <span><strong>Rep counted:</strong> Down → Up</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="cam-buttons">
+          <button class="btn btn-outline btn-full" onclick="completeSet()">
+            ✅ Complete Set
+          </button>
+          <button class="btn btn-danger btn-full" onclick="resetReps()">
+            🔄 Reset Reps
+          </button>
+          <button class="btn btn-primary btn-full" onclick="saveProgress()">
+            💾 Save Session
+          </button>
+        </div>
+
+        <div id="saveMsg" class="save-msg" style="display:none;"></div>
+
+        <!-- Set History -->
+        <div class="set-history" id="setHistory"></div>
+
+      </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="card" style="margin-top:24px;">
+      <h2 class="card-title">🏋️ Push-up Form Guide</h2>
+      <div class="tips-grid">
+        <div class="tip-item">📌 <strong>Camera angle:</strong> Side-view works best for angle detection</div>
+        <div class="tip-item">📌 <strong>Start:</strong> Arms fully extended, body straight line</div>
+        <div class="tip-item">📌 <strong>Down:</strong> Lower chest slowly to ~2cm from floor</div>
+        <div class="tip-item">📌 <strong>Up:</strong> Push back explosively to start</div>
+        <div class="tip-item">📌 <strong>Lighting:</strong> Good light improves detection accuracy</div>
+        <div class="tip-item">📌 <strong>Distance:</strong> 1.5–2m from camera for full body view</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Powered by MediaPipe & OpenCV</p></footer>
+
+  <script>
+    let repGoal     = 15;
+    let setCount    = 1;
+    let totalToday  = 0;
+    let setHistory  = [];
+    let lastReps    = 0;
+
+    // Poll reps every 600ms
+    setInterval(async () => {
+      try {
+        const res  = await fetch('/get_reps');
+        const data = await res.json();
+        const reps = data.reps;
+        document.getElementById('repCount').textContent = reps;
+
+        // Progress bar
+        const pct = Math.min((reps / repGoal) * 100, 100);
+        document.getElementById('repFill').style.width = pct + '%';
+
+        // Calorie estimate (~0.3 kcal per push-up rep)
+        document.getElementById('calBurn').textContent = Math.round(totalToday * 0.3 + reps * 0.3);
+
+        lastReps = reps;
+
+        // Flash green when goal reached
+        if (reps >= repGoal) {
+          document.getElementById('repCount').style.color = 'var(--success)';
+        } else {
+          document.getElementById('repCount').style.color = 'var(--accent)';
+        }
+      } catch(e) {}
+    }, 600);
+
+    function updateGoal(val) {
+      repGoal = parseInt(val);
+      document.getElementById('repGoalText').textContent = val + ' reps';
+    }
+
+    async function completeSet() {
+      const reps = lastReps;
+      if (reps === 0) { showMsg('No reps detected yet!', 'warn'); return; }
+
+      setHistory.push({ set: setCount, reps });
+      totalToday += reps;
+      document.getElementById('totalRepsToday').textContent = totalToday;
+      document.getElementById('setCount').textContent = setCount + 1;
+
+      // Render history
+      const hist = document.getElementById('setHistory');
+      hist.innerHTML = '<div class="sh-title">📋 Set History</div>' +
+        setHistory.map(h =>
+          `<div class="sh-row"><span>Set ${h.set}</span><span class="badge badge-green">${h.reps} reps</span></div>`
+        ).join('');
+
+      setCount++;
+      await fetch('/reset_reps', { method: 'POST' });
+      document.getElementById('repCount').textContent = '0';
+      document.getElementById('repFill').style.width = '0%';
+      showMsg(`✅ Set ${setCount - 1} logged: ${reps} reps`, 'success');
+    }
+
+    async function resetReps() {
+      await fetch('/reset_reps', { method: 'POST' });
+      document.getElementById('repCount').textContent = '0';
+      document.getElementById('repFill').style.width = '0%';
+      setCount   = 1;
+      totalToday = 0;
+      setHistory = [];
+      document.getElementById('setCount').textContent     = '1';
+      document.getElementById('totalRepsToday').textContent = '0';
+      document.getElementById('calBurn').textContent      = '0';
+      document.getElementById('setHistory').innerHTML     = '';
+      showMsg('Reps reset!', 'info');
+    }
+
+    async function saveProgress() {
+      const reps = totalToday + lastReps;
+      if (reps === 0) { showMsg('No reps to save yet!', 'warn'); return; }
+      const res = await fetch('/save_progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reps, exercise: 'Push-up', sets: setCount - 1 })
+      });
+      const data = await res.json();
+      if (data.status === 'saved') {
+        showMsg(`✅ ${reps} reps (${setCount - 1} sets) saved!`, 'success');
+      }
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('saveMsg');
+      el.textContent = text;
+      el.className   = `save-msg save-msg-${type}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    function handleFeedError() {
+      document.getElementById('cameraFeed').style.display = 'none';
+      document.getElementById('feedError').style.display  = 'flex';
+    }
+  </script>
+</body>
+</html>

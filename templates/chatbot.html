@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Coach – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  {% include 'navbar.html' %}
+
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>🤖 AI Fitness Coach</h1>
+      <p>Ask me anything about workouts, nutrition, or fitness goals!</p>
+    </div>
+
+    <div class="chat-layout">
+
+      <!-- Sidebar with quick prompts -->
+      <div class="chat-sidebar">
+        <h3>💡 Quick Questions</h3>
+        <p class="sidebar-hint">Click to ask instantly:</p>
+        <div class="quick-prompts">
+          <button class="qp-btn" onclick="askQuick('How to lose fat?')">🔥 How to lose fat?</button>
+          <button class="qp-btn" onclick="askQuick('How to build muscle?')">💪 Build muscle tips</button>
+          <button class="qp-btn" onclick="askQuick('Best exercises for abs?')">🎯 Best abs exercises</button>
+          <button class="qp-btn" onclick="askQuick('Explain BMI to me')">📊 Explain BMI</button>
+          <button class="qp-btn" onclick="askQuick('Best diet for fitness?')">🥗 Diet advice</button>
+          <button class="qp-btn" onclick="askQuick('How important is sleep for recovery?')">😴 Sleep & recovery</button>
+          <button class="qp-btn" onclick="askQuick('Give me motivation!')">🚀 Motivation boost</button>
+          <button class="qp-btn" onclick="askQuick('Beginner workout plan')">🌱 Beginner plan</button>
+          <button class="qp-btn" onclick="askQuick('How much protein do I need?')">🥚 Protein intake</button>
+          <button class="qp-btn" onclick="askQuick('Push up tips')">🤸 Push-up tips</button>
+        </div>
+      </div>
+
+      <!-- Chat window -->
+      <div class="chat-main">
+        <div class="chat-window" id="chatWindow">
+
+          <!-- Welcome message -->
+          <div class="msg msg-bot">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              <p>Hi <strong>{{ user }}</strong>! I'm your AI Fitness Coach 💪</p>
+              <p>I can help you with workout tips, diet advice, exercise form, motivation, and much more. What would you like to know today?</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input bar -->
+        <div class="chat-input-bar">
+          <input type="text" id="userInput" class="chat-input"
+                 placeholder="Ask me anything about fitness..." autocomplete="off">
+          <button class="btn btn-primary" onclick="sendMessage()">Send →</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <p>AI Fitness Trainer © 2024 &nbsp;|&nbsp; Rule-based NLP Chatbot</p>
+  </footer>
+
+  <script>
+    const chatWindow = document.getElementById('chatWindow');
+    const userInput  = document.getElementById('userInput');
+
+    // Allow Enter key to send
+    userInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    function askQuick(text) {
+      userInput.value = text;
+      sendMessage();
+    }
+
+    function addMsg(text, sender) {
+      const div = document.createElement('div');
+      div.classList.add('msg', sender === 'user' ? 'msg-user' : 'msg-bot');
+
+      const avatar = document.createElement('div');
+      avatar.classList.add('msg-avatar');
+      avatar.textContent = sender === 'user' ? '👤' : '🤖';
+
+      const bubble = document.createElement('div');
+      bubble.classList.add('msg-bubble');
+      bubble.textContent = text;
+
+      div.appendChild(avatar);
+      div.appendChild(bubble);
+      chatWindow.appendChild(div);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function addTyping() {
+      const div = document.createElement('div');
+      div.classList.add('msg', 'msg-bot');
+      div.id = 'typing';
+      div.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-bubble typing-dots"><span></span><span></span><span></span></div>';
+      chatWindow.appendChild(div);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function removeTyping() {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+    }
+
+    async function sendMessage() {
+      const msg = userInput.value.trim();
+      if (!msg) return;
+
+      addMsg(msg, 'user');
+      userInput.value = '';
+      addTyping();
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        removeTyping();
+        addMsg(data.response, 'bot');
+      } catch (err) {
+        removeTyping();
+        addMsg('Sorry, something went wrong. Please try again!', 'bot');
+      }
+    }
+  </script>
+
+</body>
+</html>

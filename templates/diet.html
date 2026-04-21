@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diet Plan – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>🥗 AI Diet Recommendation</h1>
+      <p>Personalised nutrition for
+        <strong>{{ data.goal | replace('_',' ') | title }}</strong>
+        &nbsp;·&nbsp; BMI {{ data.bmi }} ({{ data.category }})
+        {% if not has_profile %}
+        &nbsp;·&nbsp; <a href="/">Set your profile</a> for exact recommendations
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Macro Summary -->
+    <div class="macro-banner">
+      <div class="macro-item">
+        <div class="macro-val">{{ diet.calories }}</div>
+        <div class="macro-lbl">kcal / day</div>
+      </div>
+      <div class="macro-divider"></div>
+      <div class="macro-item">
+        <div class="macro-val accent-protein">{{ diet.protein_g }}g</div>
+        <div class="macro-lbl">Protein</div>
+      </div>
+      <div class="macro-divider"></div>
+      <div class="macro-item">
+        <div class="macro-val accent-carb">{{ diet.carbs_g }}g</div>
+        <div class="macro-lbl">Carbs</div>
+      </div>
+      <div class="macro-divider"></div>
+      <div class="macro-item">
+        <div class="macro-val accent-fat">{{ diet.fats_g }}g</div>
+        <div class="macro-lbl">Fats</div>
+      </div>
+      <div class="macro-chart-wrap">
+        <canvas id="macroChart" width="110" height="110"></canvas>
+      </div>
+    </div>
+
+    <!-- Meal Timeline -->
+    <div class="card">
+      <h2 class="card-title">🍽️ Daily Meal Plan</h2>
+      <div class="meal-timeline">
+        {% for meal in diet.meals %}
+        <div class="meal-card">
+          <div class="meal-time-col">
+            <div class="meal-icon">{{ meal.icon }}</div>
+            <div class="meal-time">{{ meal.time }}</div>
+            <div class="meal-cal-badge">{{ meal.calories }} kcal</div>
+          </div>
+          <div class="meal-body">
+            <div class="meal-name">{{ meal.name }}</div>
+            <ul class="meal-items">
+              {% for item in meal %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="two-col-grid">
+      <div class="card">
+        <h2 class="card-title">✅ Nutrition Tips</h2>
+        <ul class="tip-list">
+          {% for tip in diet.tips %}<li class="tip-list-item">{{ tip }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="card">
+        <h2 class="card-title">🚫 Foods to Avoid</h2>
+        <div class="avoid-grid">
+          {% for food in diet.avoid %}<span class="avoid-tag">❌ {{ food }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a href="/planner" class="btn btn-primary">📅 Weekly Planner →</a>
+      <a href="/exercises" class="btn btn-secondary">🏋️ Exercises</a>
+      <a href="/dashboard" class="btn btn-outline">← Dashboard</a>
+    </div>
+  </div>
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · AI Diet Engine</p></footer>
+
+  <script>
+    new Chart(document.getElementById('macroChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Protein','Carbs','Fats'],
+        datasets: [{
+          data: [{{ diet.protein_g }}, {{ diet.carbs_g }}, {{ diet.fats_g }}],
+          backgroundColor: ['#ff6b35','#00d4ff','#ffd700'],
+          borderWidth: 0, hoverOffset: 6
+        }]
+      },
+      options: {
+        cutout: '65%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}g` } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

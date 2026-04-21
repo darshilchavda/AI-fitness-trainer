@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Planner – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>📅 Weekly Workout Planner</h1>
+      <p>7-day schedule for
+        <strong>{{ data.goal | replace('_',' ') | title }}</strong>
+        {% if not has_profile %}
+        &nbsp;·&nbsp; <a href="/">Set your profile</a> for a personalised plan
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="week-grid">
+      {% for day in weekly_plan %}
+      <div class="day-card day-{{ day.color }}">
+        <div class="day-header">
+          <span class="day-short">{{ day.short }}</span>
+          <span class="day-icon">{{ day.icon }}</span>
+        </div>
+        <div class="day-focus">{{ day.focus }}</div>
+        <div class="day-meta">
+          <span class="intensity-badge intensity-{{ day.intensity | lower | replace(' ','-') }}">
+            {{ day.intensity }}
+          </span>
+          <span class="day-duration">⏱ {{ day.duration }}</span>
+        </div>
+        <ul class="day-exercises">
+          {% for ex in day.exercises %}<li>{{ ex }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card" style="margin-top:8px;">
+      <h2 class="card-title">📌 How to Follow This Plan</h2>
+      <div class="tips-grid">
+        <div class="tip-item">📋 Follow the schedule 6 days — Sunday is full rest</div>
+        <div class="tip-item">🔄 Rotate muscle groups for proper recovery</div>
+        <div class="tip-item">📈 Add 1–2 reps each week (progressive overload)</div>
+        <div class="tip-item">💧 Hydrate before, during, and after every session</div>
+        <div class="tip-item">😴 Sleep 7–8 hrs — muscles repair during sleep</div>
+        <div class="tip-item">🥗 Pair with diet plan — nutrition = 70% of results</div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a href="/exercises" class="btn btn-primary">🏋️ Exercise Instructions →</a>
+      <a href="/timer" class="btn btn-secondary">⏱️ Workout Timer</a>
+      <a href="/diet" class="btn btn-outline">🥗 Diet Plan</a>
+    </div>
+  </div>
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Weekly AI Planner</p></footer>
+</body>
+</html>

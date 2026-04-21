@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Plan – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>Your AI Fitness Plan 🎯</h1>
+      <p>Personalised for <strong>{{ user }}</strong> based on your profile</p>
+    </div>
+
+    <!-- BMI Banner — fixed Jinja min/max, no invalid filter args -->
+    {% set bmi_pct = ((data.bmi - 15) / 25 * 100) %}
+    {% set bmi_pct = [bmi_pct, 0] | max %}
+    {% set bmi_pct = [bmi_pct, 100] | min %}
+
+    <div class="bmi-banner bmi-{{ data.category | lower }}">
+      <div class="bmi-left">
+        <div class="bmi-label">Your BMI</div>
+        <div class="bmi-value">{{ data.bmi }}</div>
+        <div class="bmi-category">{{ data.category }}</div>
+      </div>
+      <div class="bmi-right">
+        <div class="bmi-scale">
+          <div class="bmi-bar">
+            <div class="bmi-indicator" style="left: {{ bmi_pct | int }}%"></div>
+            <div class="bmi-zones">
+              <span class="bmi-zone">&lt;18.5<br>Under</span>
+              <span class="bmi-zone">18.5–25<br>Normal</span>
+              <span class="bmi-zone">25–30<br>Over</span>
+              <span class="bmi-zone">&gt;30<br>Obese</span>
+            </div>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-stat"><span>{{ data.age }}</span>yrs</div>
+          <div class="profile-stat"><span>{{ data.height }}</span>cm</div>
+          <div class="profile-stat"><span>{{ data.weight }}</span>kg</div>
+          <div class="profile-stat"><span>{{ data.goal | replace('_',' ') | title }}</span>Goal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workout Plan Table -->
+    <div class="card">
+      <h2 class="card-title">🏋️ AI-Generated Workout Plan</h2>
+      <p class="card-sub">Goal: <strong>{{ data.goal | replace('_',' ') | title }}</strong>
+         &nbsp;·&nbsp; BMI Category: <strong>{{ data.category }}</strong></p>
+      <div class="workout-table-wrap">
+        <table class="workout-table">
+          <thead>
+            <tr><th>#</th><th>Exercise</th><th>Sets</th><th>Reps / Time</th><th>Rest</th><th>💡 Tip</th></tr>
+          </thead>
+          <tbody>
+            {% for ex in data.workout_plan %}
+            <tr>
+              <td class="ex-num">{{ loop.index }}</td>
+              <td class="ex-name">{{ ex.exercise }}</td>
+              <td><span class="badge badge-blue">{{ ex.sets }}</span></td>
+              <td><span class="badge badge-green">{{ ex.reps }}</span></td>
+              <td><span class="badge badge-grey">{{ ex.rest }}</span></td>
+              <td class="ex-tip">{{ ex.tip }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="card">
+      <h2 class="card-title">💡 Tips for Your BMI Category</h2>
+      <div class="tips-grid">
+        {% if data.category == 'Underweight' %}
+          <div class="tip-item">🍗 Increase calories by 300–500 kcal/day</div>
+          <div class="tip-item">🥛 Protein goal: 1.8 g per kg body weight</div>
+          <div class="tip-item">😴 Sleep 8–9 hours for muscle repair</div>
+          <div class="tip-item">🏋️ Focus on compound lifts & progressive overload</div>
+        {% elif data.category == 'Normal' %}
+          <div class="tip-item">⚖️ Maintain caloric balance — great starting point</div>
+          <div class="tip-item">🔄 Mix cardio + strength for balanced fitness</div>
+          <div class="tip-item">💧 Drink 2–3 litres of water daily</div>
+          <div class="tip-item">📅 150 min moderate activity per week (WHO)</div>
+        {% elif data.category == 'Overweight' %}
+          <div class="tip-item">🔥 Create a 300–500 kcal daily deficit</div>
+          <div class="tip-item">🚶 Add 30 min walking on rest days</div>
+          <div class="tip-item">🥗 Fill half your plate with vegetables</div>
+          <div class="tip-item">📵 Replace sugary drinks with water or green tea</div>
+        {% else %}
+          <div class="tip-item">🏥 Consult a doctor before intense exercise</div>
+          <div class="tip-item">🚶 Start with 20–30 min walks, 5×/week</div>
+          <div class="tip-item">🥣 Focus on whole foods, reduce fried food</div>
+          <div class="tip-item">📉 Even 5–10% weight loss improves health significantly</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="action-row">
+      <a href="/dashboard" class="btn btn-primary">📊 Dashboard</a>
+      <a href="/diet" class="btn btn-secondary">🥗 Diet Plan</a>
+      <a href="/planner" class="btn btn-secondary">📅 Weekly Planner</a>
+      <a href="/camera" class="btn btn-outline">🎥 Pose Cam</a>
+      <a href="/" class="btn btn-outline">← Recalculate</a>
+    </div>
+  </div>
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Rule-based AI Recommendation</p></footer>
+</body>
+</html>

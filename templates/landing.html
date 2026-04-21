@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="landing-body">
+
+  <nav class="navbar">
+    <div class="nav-brand">⚡ AI Fitness Trainer</div>
+    <div class="nav-links">
+      <a href="/login" class="btn btn-outline">Login</a>
+      <a href="/register" class="btn btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🤖 AI-Powered Fitness</div>
+      <h1 class="hero-title">Train Smarter.<br>Not Harder.</h1>
+      <p class="hero-sub">
+        Get personalized workout plans, real-time pose detection, rep counting,
+        and an AI coach — all in one place.
+      </p>
+      <div class="hero-btns">
+        <a href="/register" class="btn btn-primary btn-lg">Start Free →</a>
+        <a href="/login" class="btn btn-outline btn-lg">Login</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="stat-cards">
+        <div class="stat-card">
+          <span class="stat-num">BMI</span>
+          <span class="stat-label">Smart Calculator</span>
+        </div>
+        <div class="stat-card highlight">
+          <span class="stat-num">💪</span>
+          <span class="stat-label">Rep Counter</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">📈</span>
+          <span class="stat-label">Progress Tracking</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">🤖</span>
+          <span class="stat-label">AI Chatbot</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-strip">
+    <div class="feature-item">🎯 <strong>Personalised Plans</strong> based on your BMI & goal</div>
+    <div class="feature-item">🏋️ <strong>Pose Detection</strong> with MediaPipe AI</div>
+    <div class="feature-item">🔢 <strong>Live Rep Counter</strong> as you work out</div>
+    <div class="feature-item">💬 <strong>AI Chatbot</strong> for instant fitness advice</div>
+  </section>
+
+  <footer class="footer">
+    <p>Built with ❤️ using Flask, MediaPipe & Chart.js &nbsp;|&nbsp; AI Fitness Trainer © 2024</p>
+  </footer>
+
+</body>
+</html>

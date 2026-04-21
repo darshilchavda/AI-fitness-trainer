@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+  <div class="auth-split">
+
+    <!-- Left branding panel -->
+    <div class="auth-panel">
+      <div class="auth-panel-content">
+        <div class="auth-logo">⚡</div>
+        <h2>AI Fitness Trainer</h2>
+        <p>Your personal AI-powered workout companion. Get personalised plans, track your reps, and crush your goals.</p>
+        <ul class="auth-features">
+          <li>✅ AI Workout Recommendations</li>
+          <li>✅ Real-time Pose Detection</li>
+          <li>✅ Rep Counter & Progress Tracking</li>
+          <li>✅ 24/7 AI Fitness Coach</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form-panel">
+      <div class="auth-box">
+        <h2 class="auth-title">Welcome Back 👋</h2>
+        <p class="auth-sub">Login to access your fitness dashboard</p>
+
+        {% if error %}
+        <div class="alert alert-error">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <form action="/login" method="POST" class="auth-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username"
+                   placeholder="Enter your username" required autofocus>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Login →</button>
+        </form>
+
+        <p class="auth-switch">
+          Don't have an account?
+          <a href="/register">Register here</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

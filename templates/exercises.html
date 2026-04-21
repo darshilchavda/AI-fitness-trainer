@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exercise Library – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>🏋️ Exercise Library</h1>
+      <p>Step-by-step instructions, form tips, and common mistakes for every exercise</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterEx('all', this)">All</button>
+      <button class="filter-btn" onclick="filterEx('Upper Body', this)">💪 Upper Body</button>
+      <button class="filter-btn" onclick="filterEx('Lower Body', this)">🦵 Lower Body</button>
+      <button class="filter-btn" onclick="filterEx('Core', this)">🎯 Core</button>
+      <button class="filter-btn" onclick="filterEx('Cardio', this)">🏃 Cardio</button>
+    </div>
+
+    <!-- Exercise Cards -->
+    <div class="ex-library" id="exLibrary">
+      {% for ex in library %}
+      <div class="ex-card" data-cat="{{ ex.category }}" id="card-{{ ex.id }}">
+
+        <div class="ex-card-header" onclick="toggleCard('{{ ex.id }}')">
+          <div class="ex-card-title-row">
+            <span class="ex-card-icon">{{ ex.icon }}</span>
+            <div>
+              <div class="ex-card-name">{{ ex.name }}</div>
+              <div class="ex-card-meta">
+                <span class="badge badge-blue">{{ ex.category }}</span>
+                <span class="badge badge-grey">{{ ex.difficulty }}</span>
+                <span class="badge badge-green">{{ ex.sets_reps }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="ex-muscles">
+            {% for m in ex.muscles %}
+            <span class="muscle-tag">{{ m }}</span>
+            {% endfor %}
+          </div>
+          <span class="ex-toggle" id="toggle-{{ ex.id }}">▼</span>
+        </div>
+
+        <div class="ex-card-body" id="body-{{ ex.id }}" style="display:none;">
+
+          <div class="ex-instruction-grid">
+            <!-- Steps -->
+            <div class="ex-section">
+              <h4>📋 Step-by-Step Instructions</h4>
+              <ol class="step-list">
+                {% for step in ex.steps %}
+                <li>{{ step }}</li>
+                {% endfor %}
+              </ol>
+            </div>
+
+            <!-- Tips & Mistakes -->
+            <div class="ex-section">
+              <h4>🔑 Pro Tips</h4>
+              <ul class="pro-tip-list">
+                {% for tip in ex.tips %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+              </ul>
+
+              <h4 style="margin-top:16px;">❌ Common Mistakes</h4>
+              <ul class="mistake-list">
+                {% for m in ex.mistakes %}
+                <li>{{ m }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- Variations -->
+          <div class="variation-row">
+            <strong>🔄 Variations:</strong>
+            {% for v in ex.variations %}
+            <span class="variation-tag">{{ v }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Timer quick-link -->
+          <a href="/timer" class="btn btn-secondary btn-sm" style="margin-top:12px; display:inline-flex;">
+            ⏱️ Use Workout Timer for this exercise
+          </a>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Exercise Instruction Library</p></footer>
+
+  <script>
+    function toggleCard(id) {
+      const body   = document.getElementById('body-' + id);
+      const toggle = document.getElementById('toggle-' + id);
+      const isOpen = body.style.display !== 'none';
+      body.style.display   = isOpen ? 'none' : 'block';
+      toggle.textContent   = isOpen ? '▼' : '▲';
+    }
+
+    function filterEx(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.ex-card').forEach(card => {
+        const show = cat === 'all' || card.dataset.cat.includes(cat);
+        card.style.display = show ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

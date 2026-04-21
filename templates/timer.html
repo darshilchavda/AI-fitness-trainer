@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Timer – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>⏱️ Workout Timer</h1>
+      <p>Countdown timer with rest intervals — stay on track every set</p>
+    </div>
+
+    <div class="timer-layout">
+
+      <!-- ── Main Timer Panel ── -->
+      <div class="timer-main">
+
+        <!-- Mode selector -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="tabWork" onclick="setMode('work')">💪 Work</button>
+          <button class="mode-tab" id="tabRest"        onclick="setMode('rest')">😴 Rest</button>
+          <button class="mode-tab" id="tabTabata"      onclick="setMode('tabata')">🔥 Tabata</button>
+          <button class="mode-tab" id="tabCustom"      onclick="setMode('custom')">⚙️ Custom</button>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="timer-display" id="timerDisplay">
+          <svg class="timer-ring" viewBox="0 0 220 220">
+            <circle class="ring-bg" cx="110" cy="110" r="100"/>
+            <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="100"
+                    stroke-dasharray="628.3" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-inner">
+            <div class="timer-mode-label" id="modeLabel">WORK</div>
+            <div class="timer-time" id="timerTime">00:30</div>
+            <div class="timer-set-label" id="setLabel">Set 1 of 3</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="timer-controls">
+          <button class="btn btn-outline" onclick="skipPrev()">⏮ Prev</button>
+          <button class="btn btn-primary btn-lg" id="startBtn" onclick="toggleTimer()">▶ Start</button>
+          <button class="btn btn-outline" onclick="skipNext()">Next ⏭</button>
+        </div>
+        <button class="btn btn-danger btn-full" style="margin-top:10px;" onclick="resetTimer()">🔄 Reset</button>
+
+        <!-- Exercise name display -->
+        <div class="timer-exercise-label" id="exerciseLabel">Push-up</div>
+      </div>
+
+      <!-- ── Settings Panel ── -->
+      <div class="timer-settings">
+
+        <!-- Preset Workouts -->
+        <div class="card">
+          <h3 class="card-title">🎯 Quick Presets</h3>
+          <div class="preset-grid">
+            <button class="preset-btn" onclick="loadPreset(30,10,3,'Push-up')">
+              <span>🤸</span><strong>Push-up</strong><small>30s · 10s rest · 3 sets</small>
+            </button>
+            <button class="preset-btn" onclick="loadPreset(40,15,3,'Squat')">
+              <span>🦵</span><strong>Squat</strong><small>40s · 15s rest · 3 sets</small>
+            </button>
+            <button class="preset-btn" onclick="loadPreset(45,15,3,'Plank')">
+              <span>🏋️</span><strong>Plank</strong><small>45s · 15s rest · 3 sets</small>
+            </button>
+            <button class="preset-btn" onclick="loadPreset(30,10,4,'Burpee')">
+              <span>🔥</span><strong>Burpee</strong><small>30s · 10s rest · 4 sets</small>
+            </button>
+            <button class="preset-btn" onclick="loadPreset(20,10,8,'Tabata')">
+              <span>⚡</span><strong>Tabata</strong><small>20s · 10s rest · 8 rounds</small>
+            </button>
+            <button class="preset-btn" onclick="loadPreset(60,20,3,'Lunge')">
+              <span>🚶</span><strong>Lunge</strong><small>60s · 20s rest · 3 sets</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Settings -->
+        <div class="card" id="customPanel">
+          <h3 class="card-title">⚙️ Custom Settings</h3>
+          <div class="timer-form">
+            <div class="form-group">
+              <label>Exercise Name</label>
+              <input type="text" id="exName" value="Push-up" class="timer-input">
+            </div>
+            <div class="form-group">
+              <label>Work Time (seconds)</label>
+              <input type="number" id="workSec" value="30" min="5" max="300" class="timer-input">
+            </div>
+            <div class="form-group">
+              <label>Rest Time (seconds)</label>
+              <input type="number" id="restSec" value="10" min="5" max="120" class="timer-input">
+            </div>
+            <div class="form-group">
+              <label>Number of Sets</label>
+              <input type="number" id="numSets" value="3" min="1" max="20" class="timer-input">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="applyCustom()">Apply ✓</button>
+          </div>
+        </div>
+
+        <!-- Session Log -->
+        <div class="card">
+          <h3 class="card-title">📋 Session Log</h3>
+          <div id="sessionLog" class="session-log">
+            <p class="empty-log">No sets completed yet. Start your timer!</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Workout Timer</p></footer>
+
+  <!-- Beep sound via Web Audio API -->
+  <script>
+  // ── Audio Beep ─────────────────────────────────────────────────────────────
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+
+  function beep(freq = 880, dur = 0.15, vol = 0.5) {
+    try {
+      if (!audioCtx) audioCtx = new AudioCtx();
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + dur);
+    } catch(e) {}
+  }
+
+  function tripleBeep() {
+    beep(660, 0.12); 
+    setTimeout(() => beep(660, 0.12), 180); 
+    setTimeout(() => beep(880, 0.25), 360);
+  }
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let workSec   = 30;
+  let restSec   = 10;
+  let totalSets = 3;
+  let exName    = 'Push-up';
+
+  let currentSet  = 1;
+  let phase       = 'work';   // 'work' | 'rest' | 'done'
+  let remaining   = workSec;
+  let running     = false;
+  let intervalId  = null;
+  let logEntries  = [];
+
+  const FULL_DASH = 628.3;
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const timerTimeEl  = document.getElementById('timerTime');
+  const modeLabelEl  = document.getElementById('modeLabel');
+  const setLabelEl   = document.getElementById('setLabel');
+  const ringEl       = document.getElementById('ringProgress');
+  const startBtn     = document.getElementById('startBtn');
+  const exLabelEl    = document.getElementById('exerciseLabel');
+  const timerDisplay = document.getElementById('timerDisplay');
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  }
+
+  function updateRing(elapsed, total) {
+    const frac   = elapsed / total;
+    const offset = FULL_DASH * frac;
+    ringEl.style.strokeDashoffset = offset;
+  }
+
+  function updateDisplay() {
+    timerTimeEl.textContent = fmt(remaining);
+    const total = phase === 'work' ? workSec : restSec;
+    const elapsed = total - remaining;
+    updateRing(elapsed, total);
+
+    // Phase colours
+    if (phase === 'work') {
+      timerDisplay.className = 'timer-display phase-work';
+      modeLabelEl.textContent = '💪 WORK';
+      ringEl.style.stroke = '#ff6b35';
+    } else if (phase === 'rest') {
+      timerDisplay.className = 'timer-display phase-rest';
+      modeLabelEl.textContent = '😴 REST';
+      ringEl.style.stroke = '#00d4ff';
+    } else {
+      timerDisplay.className = 'timer-display phase-done';
+      modeLabelEl.textContent = '🎉 DONE';
+      ringEl.style.stroke = '#00e676';
+    }
+
+    setLabelEl.textContent = `Set ${currentSet} of ${totalSets}`;
+    exLabelEl.textContent  = exName;
+  }
+
+  function tick() {
+    if (remaining <= 0) {
+      if (phase === 'work') {
+        // Log completed set
+        logSet(currentSet, exName);
+        if (currentSet >= totalSets) {
+          // All sets done
+          phase     = 'done';
+          remaining = 0;
+          running   = false;
+          clearInterval(intervalId);
+          tripleBeep();
+          updateDisplay();
+          startBtn.textContent = '▶ Start';
+          return;
+        }
+        // Move to rest
+        phase     = 'rest';
+        remaining = restSec;
+        beep(660, 0.2);
+      } else {
+        // Rest done → next set
+        currentSet++;
+        phase     = 'work';
+        remaining = workSec;
+        beep(880, 0.3);
+      }
+    } else {
+      // Beep at 3 seconds remaining
+      if (remaining === 3) beep(440, 0.1);
+      remaining--;
+    }
+    updateDisplay();
+  }
+
+  // ── Controls ───────────────────────────────────────────────────────────────
+  function toggleTimer() {
+    if (phase === 'done') { resetTimer(); return; }
+    if (!audioCtx) audioCtx = new AudioCtx();   // unlock audio on first click
+    running = !running;
+    if (running) {
+      intervalId = setInterval(tick, 1000);
+      startBtn.textContent = '⏸ Pause';
+    } else {
+      clearInterval(intervalId);
+      startBtn.textContent = '▶ Resume';
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(intervalId);
+    running    = false;
+    phase      = 'work';
+    currentSet = 1;
+    remaining  = workSec;
+    startBtn.textContent = '▶ Start';
+    updateDisplay();
+  }
+
+  function skipNext() {
+    if (!running) return;
+    remaining = 0;
+    tick();
+  }
+
+  function skipPrev() {
+    if (phase === 'rest') {
+      phase     = 'work';
+      remaining = workSec;
+    } else if (currentSet > 1) {
+      currentSet--;
+      phase     = 'work';
+      remaining = workSec;
+    }
+    updateDisplay();
+  }
+
+  // ── Mode tabs (visual only for now) ───────────────────────────────────────
+  function setMode(m) {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab' + m.charAt(0).toUpperCase() + m.slice(1)).classList.add('active');
+    if (m === 'tabata')      { loadPreset(20, 10, 8, 'Tabata'); }
+    else if (m === 'work')   { loadPreset(30, 10, 3, exName); }
+    else if (m === 'rest')   { loadPreset(0, 60, 1, 'Rest'); }
+  }
+
+  // ── Presets ────────────────────────────────────────────────────────────────
+  function loadPreset(w, r, s, name) {
+    workSec   = w;
+    restSec   = r;
+    totalSets = s;
+    exName    = name;
+    document.getElementById('workSec').value = w;
+    document.getElementById('restSec').value = r;
+    document.getElementById('numSets').value = s;
+    document.getElementById('exName').value  = name;
+    resetTimer();
+  }
+
+  function applyCustom() {
+    workSec   = parseInt(document.getElementById('workSec').value)  || 30;
+    restSec   = parseInt(document.getElementById('restSec').value)  || 10;
+    totalSets = parseInt(document.getElementById('numSets').value)  || 3;
+    exName    = document.getElementById('exName').value || 'Exercise';
+    resetTimer();
+  }
+
+  // ── Session Log ────────────────────────────────────────────────────────────
+  function logSet(set, name) {
+    const now  = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const el   = document.getElementById('sessionLog');
+    if (el.querySelector('.empty-log')) el.innerHTML = '';
+    const row  = document.createElement('div');
+    row.className = 'log-row';
+    row.innerHTML = `<span class="log-set">Set ${set}</span>
+                     <span class="log-ex">${name}</span>
+                     <span class="log-dur">${fmt(workSec)}</span>
+                     <span class="log-time">${now}</span>`;
+    el.appendChild(row);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  updateDisplay();
+  </script>
+</body>
+</html>

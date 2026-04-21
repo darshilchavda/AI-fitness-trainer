@@ -1,0 +1,31 @@
+<nav class="navbar">
+  <a href="/" class="nav-brand">⚡ AI Fitness</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/planner">Planner</a>
+    <a href="/diet">Diet</a>
+    <a href="/exercises">Exercises</a>
+    <a href="/camera">Pose Cam</a>
+    <a href="/timer">Timer</a>
+    <a href="/chatbot">AI Coach</a>
+    <a href="/logout" class="btn btn-outline btn-sm">Logout</a>
+  </div>
+  <button class="nav-hamburger" id="navToggle" onclick="toggleNav()">☰</button>
+</nav>
+<div class="nav-mobile" id="navMobile">
+  <a href="/">🏠 Home</a>
+  <a href="/dashboard">📊 Dashboard</a>
+  <a href="/planner">📅 Planner</a>
+  <a href="/diet">🥗 Diet</a>
+  <a href="/exercises">🏋️ Exercises</a>
+  <a href="/camera">🎥 Pose Cam</a>
+  <a href="/timer">⏱️ Timer</a>
+  <a href="/chatbot">🤖 AI Coach</a>
+  <a href="/logout">🚪 Logout</a>
+</div>
+<script>
+function toggleNav(){
+  document.getElementById('navMobile').classList.toggle('open');
+}
+</script>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – AI Fitness Trainer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="page-container">
+
+    <div class="page-header">
+      <h1>📊 Dashboard</h1>
+      <p>Hello <strong>{{ user }}</strong> — here's your complete fitness overview</p>
+    </div>
+
+    {% if not has_profile %}
+    <div class="alert alert-info">
+      ⚡ <a href="/">Fill in your profile</a> to unlock a personalised workout plan, diet, and recommendations.
+    </div>
+    {% endif %}
+
+    <!-- Stat Widgets -->
+    <div class="stats-row">
+      <div class="stat-widget">
+        <div class="sw-icon">⚖️</div>
+        <div class="sw-info">
+          <div class="sw-val">{{ data.bmi }}</div>
+          <div class="sw-lbl">BMI · {{ data.category }}</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="sw-icon">🔢</div>
+        <div class="sw-info">
+          <div class="sw-val">{{ total_reps }}</div>
+          <div class="sw-lbl">Total Reps Ever</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="sw-icon">📅</div>
+        <div class="sw-info">
+          <div class="sw-val">{{ total_sessions }}</div>
+          <div class="sw-lbl">Sessions Logged</div>
+        </div>
+      </div>
+      <div class="stat-widget">
+        <div class="sw-icon">🏆</div>
+        <div class="sw-info">
+          <div class="sw-val">{{ best_reps }}</div>
+          <div class="sw-lbl">Best Session</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <!-- Progress Chart -->
+      <div class="card">
+        <h2 class="card-title">📈 Reps Progress Over Time</h2>
+        {% if progress %}
+        <div class="chart-type-toggle">
+          <button class="ct-btn active" onclick="switchChart('line',this)">Line</button>
+          <button class="ct-btn" onclick="switchChart('bar',this)">Bar</button>
+        </div>
+        <canvas id="progressChart" height="220"></canvas>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🏋️</div>
+          <p>No sessions logged yet.</p>
+          <p>Go to <a href="/camera">Pose Camera</a> and save your first workout!</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Right column -->
+      <div>
+        {% if data.workout_plan %}
+        <div class="card">
+          <h2 class="card-title">🏋️ Today's Workout</h2>
+          <ul class="plan-list">
+            {% for ex in data.workout_plan %}
+            <li class="plan-item">
+              <span class="plan-name">{{ ex.exercise }}</span>
+              <span class="plan-detail">{{ ex.sets }}×{{ ex.reps }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          <a href="/result" class="btn btn-outline btn-sm" style="margin-top:12px;display:inline-block;">
+            Full Plan →
+          </a>
+        </div>
+        {% endif %}
+
+        <div class="card streak-card">
+          <h2 class="card-title">🔥 Total Sessions</h2>
+          <div class="streak-num">{{ total_sessions }}</div>
+          <div class="streak-label">Workouts Logged</div>
+          {% if progress %}
+          <div class="streak-last">Last: <strong>{{ progress[-1].date }}</strong></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Sessions Table -->
+    {% if progress %}
+    <div class="card">
+      <h2 class="card-title">🗓️ Recent Sessions</h2>
+      <div class="workout-table-wrap">
+        <table class="workout-table">
+          <thead><tr><th>Date</th><th>Exercise</th><th>Reps</th><th>Sets</th></tr></thead>
+          <tbody>
+            {% for entry in progress | reverse %}
+            {% if loop.index <= 10 %}
+            <tr>
+              <td>{{ entry.date }}</td>
+              <td>{{ entry.exercise }}</td>
+              <td><span class="badge badge-green">{{ entry.reps }}</span></td>
+              <td><span class="badge badge-blue">{{ entry.sets if entry.sets else '—' }}</span></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Access -->
+    <h2 class="section-title">Quick Access</h2>
+    <div class="quick-grid-5">
+      <a href="/" class="quick-card"><span class="qc-icon">📋</span><span class="qc-label">Profile</span><span class="qc-desc">Update details</span></a>
+      <a href="/planner" class="quick-card"><span class="qc-icon">📅</span><span class="qc-label">Planner</span><span class="qc-desc">Weekly schedule</span></a>
+      <a href="/diet" class="quick-card"><span class="qc-icon">🥗</span><span class="qc-label">Diet</span><span class="qc-desc">Meal plan</span></a>
+      <a href="/exercises" class="quick-card"><span class="qc-icon">🏋️</span><span class="qc-label">Exercises</span><span class="qc-desc">Instructions</span></a>
+      <a href="/timer" class="quick-card"><span class="qc-icon">⏱️</span><span class="qc-label">Timer</span><span class="qc-desc">Countdown</span></a>
+    </div>
+
+  </div>
+  <footer class="footer"><p>AI Fitness Trainer © 2024 · Progress powered by Chart.js</p></footer>
+
+  <script>
+  {% if progress %}
+  const raw     = {{ progress | tojson }};
+  const labels  = raw.map(e => e.date);
+  const repData = raw.map(e => e.reps);
+  let myChart   = null;
+
+  function buildChart(type) {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    if (myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+      type,
+      data: {
+        labels,
+        datasets: [{
+          label: 'Reps',
+          data: repData,
+          borderColor: '#ff6b35',
+          backgroundColor: type === 'line' ? 'rgba(255,107,53,0.12)' : 'rgba(255,107,53,0.55)',
+          borderWidth: 3,
+          pointBackgroundColor: '#ff6b35',
+          pointRadius: 5,
+          tension: 0.35,
+          fill: type === 'line',
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#ccc', font: { family: 'Inter' } } } },
+        scales: {
+          x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          y: { beginAtZero: true, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+        }
+      }
+    });
+  }
+  function switchChart(type, btn) {
+    document.querySelectorAll('.ct-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    buildChart(type);
+  }
+  buildChart('line');
+  {% endif %}
+  </script>
+</body>
+</html>
