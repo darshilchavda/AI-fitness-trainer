@@ -3,7 +3,7 @@ import json, os
 from datetime import date
 from model.logic import (calculate_bmi, get_workout_plan, chatbot_response,
                          get_diet_plan, get_weekly_planner, get_exercise_library)
-from camera import generate_frames, get_rep_count, reset_rep_count
+#from camera import generate_frames, get_rep_count, reset_rep_count
 
 app = Flask(__name__)
 app.secret_key = 'ai_fitness_secret_2024'
@@ -116,14 +116,14 @@ def chat():
     return jsonify({'response': chatbot_response(request.json.get('message',''))})
 
 # ── Camera ────────────────────────────────────────────────────────────────────
-@app.route('/camera')
-def camera_page():
-    if 'user' not in session: return redirect(url_for('login'))
-    return render_template('camera.html', user=session['user'])
+#@app.route('/camera')
+#def camera_page():
+   # if 'user' not in session: return redirect(url_for('login'))
+   # return render_template('camera.html', user=session['user'])
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+#@app.route('/video_feed')
+#def video_feed():
+    #return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/get_reps')
 def get_reps():
