@@ -187,8 +187,7 @@ def timer():
     return render_template('timer.html', user=session['user'])
 
 # ─────────────────────────────────────────────────────────────────────────────
+import os
+
 if __name__ == '__main__':
-    os.makedirs(DATA_DIR, exist_ok=True)
-    for f, d in [(USERS_FILE, {}), (PROGRESS_FILE, {})]:
-        if not os.path.exists(f): save_json(f, d)
-   app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
