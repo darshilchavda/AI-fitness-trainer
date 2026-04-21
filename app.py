@@ -1,3 +1,11 @@
+import os, json
+
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+if not os.path.exists('data/users.json'):
+    with open('data/users.json', 'w') as f:
+        json.dump({}, f)
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response
 import json, os
 from datetime import date
